@@ -1,5 +1,6 @@
 import random
-import socket, select
+import socket
+import select
 from time import gmtime, strftime
 from random import randint
 
@@ -7,37 +8,35 @@ imgcounter = 1
 basename = "image%s.png"
 
 HOST = '127.0.0.1'
-PORT = 6666
+PORT = 1001
 
 connected_clients_sockets = []
 
+# define a server socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+# set options, bind socket to ip:port and listen on that address
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind((HOST, PORT))
-server_socket.listen(10)
+server_socket.listen(10)  # take max 10 connections
 
+# add client to the queue
 connected_clients_sockets.append(server_socket)
 
 while True:
-
-    read_sockets, write_sockets, error_sockets = select.select(connected_clients_sockets, [], [])
+    # put clients into the read
+    read_sockets, write_sockets, error_sockets = select.select(
+        connected_clients_sockets, [], [])
 
     for sock in read_sockets:
-
-        if sock == server_socket:
-
-            sockfd, client_address = server_socket.accept()
-            connected_clients_sockets.append(sockfd)
-
+        if sock == server_socket:  # new connection
+            sockfd, client_address = server_socket.accept()  # accept client
+            # connected_clients_sockets.append(sockfd)
         else:
             try:
-
                 data = sock.recv(4096)
                 txt = data.decode("utf-8")
                 print(txt)
                 if data:
-
                     if data.startswith('SIZE'):
                         tmp = txt.split()
                         size = int(tmp[1])
@@ -49,7 +48,7 @@ while True:
                     elif data.startswith('BYE'):
                         sock.shutdown()
 
-                    else :
+                    else:
 
                         myfile = open(basename % imgcounter, 'wb')
                         myfile.write(data)
