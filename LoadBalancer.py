@@ -2,42 +2,49 @@ import socket
 import select
 from itertools import cycle
 
+#Host and port
 HOST = '127.0.0.1'
 PORT = 1005
 
+# all the server
 SERVER_POOL = [('127.0.0.1', 1001), ('127.0.0.1', 1002),
                ('127.0.0.1', 1003), ('127.0.0.1', 1004)]
+
+# loops continuously through the servers
 ITERATOR = cycle(SERVER_POOL)
 
-in_queue = []
-out_queue = []
-lookup = {}
 
-msg = {}
+in_queue = []  # incoming messages
+out_queue = []  # outgoing messgaes
+lookup = {}  # find out which serer is connected to which client or which client is connected to which server
+
+msg = {}  # holds the messgae to be sent to the receiver
 
 
 def start_balancer():
     while True:
-        # put clients into read mode
+        # separated clients based on outgoing and incoming
         read_sockets, write_sockets, error_sockets = select.select(
             in_queue, out_queue, [])
+        # handles incoming messages or incoming connections
         for sock in read_sockets:
-            if sock == client_sock:  # new connection
+            if sock == client_sock:  # incoming connection
                 accept_client()  # accept client
                 break
-            else:
+            else:  # incoming message
                 try:
                     data = sock.recv(4096)
-                    if data:
+                    if data:  # check if theres data
                         receive(sock, data)
-                    else:
+                    else:  # close connection if nothing
                         close_socket(sock)
                         break
                 except:
-                    close_socket(sock)
+                    close_socket(sock)  # close if error
                     break
+        # handles outgoing messgaes
         for sock in write_sockets:
-            if len(out_queue) != 0:
+            if len(out_queue) != 0:  # send message if theres one
                 send(sock)
             else:
                 close_socket(sock)
@@ -55,18 +62,21 @@ def accept_client():
     # make connection to the server
     print(f'server socket located at: {(ip_server, port_server)}')
 
+    # connect client to server
     client_server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_server_sock.connect((ip_server, port_server))
     print(f'client {client_address} connected to server {sockfd.getsockname()}')
 
+    # add client and server to the receiving queue
     in_queue.append(sockfd)
     in_queue.append(client_server_sock)
 
+    # tell the look up that client X is connected to server Y
     lookup[sockfd] = client_server_sock
     lookup[client_server_sock] = sockfd
 
 
-def round_robin(iterate):
+def round_robin(iterate):  # get the next server
     return next(iterate)
 
 
@@ -89,8 +99,11 @@ def send(sender):
     out_queue.remove(sender)  # remove sent message from queue
     del msg[sender]  # remove data from msg
 
+# close client
+
 
 def close_socket(socket: socket.socket):
+    # remove client and server from incoming queue and outgoing queue
     server_socket = lookup[socket]
     in_queue.remove(socket)
     in_queue.remove(server_socket)
@@ -98,7 +111,7 @@ def close_socket(socket: socket.socket):
         out_queue.remove(socket)
 
     print(f'client {socket.getpeername()} disconnected')
-
+    # close sockets and delete from look up
     socket.close()
     server_socket.close()
     del lookup[socket]

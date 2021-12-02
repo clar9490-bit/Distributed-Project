@@ -1,7 +1,10 @@
 import socket
 
+#host and port
 HOST = '127.0.0.1'
 PORT = 1001
+
+# close the client
 
 
 def close_client(socket):
@@ -23,15 +26,19 @@ if __name__ == '__main__':
     print(f'socket listening on {server_socket.getsockname()}')
 
     while True:
+        # accept client
         client, info = server_socket.accept()
         print(f'Got a connection from {(info)}')
 
+        # send client the questionare
         client.send(
             "Are you vaccinated against COVID-19?\nDo you have any COVID-19 symptoms?".encode())
         # Q1: Are u vaxx
         # Q2: Do u have covid19 symptoms
         q = client.recv(1024).decode()
         answers = q.split()
+
+        # check if user can go in
         if answers[0] == 'NO' or answers[1] == 'YES':
             close_client(client)
         else:
