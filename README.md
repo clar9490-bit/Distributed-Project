@@ -1,5 +1,5 @@
-### SOFE 4790 - Distributed System Final Project
-### COVID-19 Screening Queue
+## SOFE 4790 - Distributed System Final Project
+## COVID-19 Screening Queue
 ### Clarissa Branje		100716458 || Cristina Chung 		100711128 || Cassidy Linhares		100615025 || Ernest Li				100658701
 
 
